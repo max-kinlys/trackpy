@@ -51,7 +51,24 @@ def read_transponder(filename=None, length=250, sessions=None):
     - 'Transponder': The transponder ID
 
     """
+    required_columns = {
+        "Date",
+        "Start time",
+        "Total time",
+        "Laptime",
+        "Speed",
+        "Lap",
+        "Diff",
+        "Transponder",
+    }
+
     df = pd.read_csv(filename, encoding="utf-16-le").dropna(how="all")
+    missing_columns = required_columns.difference(df.columns)
+    if missing_columns:
+        raise ValueError(
+            "Expected a utf-16-le CSV with columns "
+            f"{sorted(required_columns)}; missing {sorted(missing_columns)}."
+        )
 
     # add time and date
     df["Timestamp"] = pd.to_datetime(
