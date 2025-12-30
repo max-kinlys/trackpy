@@ -49,6 +49,10 @@ def read_fit(
     if lap:
         columns += ["lap"]
 
+    for column in columns:
+        if column not in fit.columns:
+            fit[column] = None
+
     return fit[columns]
 
 
