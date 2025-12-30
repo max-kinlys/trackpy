@@ -13,6 +13,7 @@ logging.basicConfig(
 parser = argparse.ArgumentParser(description="Convert track CSV into GPX file.")
 parser.add_argument("--input", "-i", help="CSV file to read.")
 parser.add_argument("--output", "-o", help="GPX file to write.")
+parser.add_argument("--fit", help="Optional .fit file to include heart rate data.")
 parser.add_argument(
     "--sessions", "-s", help="Which sessions to include. Omit to include all sessions."
 )
@@ -72,6 +73,20 @@ transponder = track.parse_transponder(filename, sessions=sessions)
 logging.info(f"Mapping {filename} to the Eddy Merck wielercentrum")
 interpolation = track.map_interpolation_to_velodrome(transponder, wielercentrum)
 
+fit = None
+if args.fit:
+    fit_path = pathlib.Path(args.fit)
+    tz = interpolation["Interpolated time (s)"].dt.tz
+    tz_name = tz.zone if hasattr(tz, "zone") else str(tz)
+    fit = track.read_fit(fit_path, tz=tz_name)
+    has_hr = "heartrate" in fit and fit["heartrate"].notna().any()
+    if has_hr:
+        logging.info("Including heart rate data from FIT file.")
+    else:
+        logging.info("FIT file loaded but no heart rate data found.")
+else:
+    logging.info("No FIT file provided; GPX will not include heart rate data.")
+
 # Write to GPX
 logging.info(f"Writing to {gpxfile}")
-track.write_gpx(gpxfile, interpolation, velodrome=wielercentrum)
+track.write_gpx(gpxfile, interpolation, fit=fit, velodrome=wielercentrum)
