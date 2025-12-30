@@ -3,7 +3,6 @@ from xml.etree import ElementTree
 import gpxpy
 import gpxpy.gpx
 import pandas as pd
-import sweat
 
 
 def read_fit(
@@ -33,6 +32,8 @@ def read_fit(
         DataFrame containing selected columns with timestamps converted to the specified time zone.
 
     """
+
+    import sweat
 
     fit = sweat.read_fit(file).reset_index()
     fit["datetime"] = fit["datetime"].dt.tz_convert(tz=tz)

@@ -51,7 +51,26 @@ def read_transponder(filename=None, length=250, sessions=None):
     - 'Transponder': The transponder ID
 
     """
-    df = pd.read_csv(filename, encoding="utf-16-le").dropna(how="all")
+    encodings = ["utf-16-le", "utf-8-sig", "utf-8"]
+    required_columns = {"Date", "Start time", "Lap", "Laptime", "Speed"}
+    last_error = None
+    df = None
+    for encoding in encodings:
+        try:
+            candidate = pd.read_csv(filename, encoding=encoding).dropna(how="all")
+        except UnicodeError as exc:
+            last_error = exc
+            continue
+        if required_columns.issubset(set(candidate.columns)):
+            df = candidate
+            break
+    if df is None:
+        if last_error:
+            raise last_error
+        raise ValueError(
+            "Missing required columns in CSV. Expected columns like "
+            f"{', '.join(sorted(required_columns))}."
+        )
 
     # add time and date
     df["Timestamp"] = pd.to_datetime(
